@@ -46,5 +46,37 @@ def get_user(email):
     else:
         return{"message": "User not found"}
     
-    
 
+def increment_api_calls(email):
+    user = users_collection.find_one({"email": email})
+
+    if user:
+        users_collection.update_one({"email": email}, {"$inc": {"api_calls": 1}})
+        return {"message": "API calls incremented successfully"}
+    
+    return {"message": "User not found"}
+
+        
+def add_anonymous_session(session_id):
+    session=anonymous_sessions_collection.find_one({"session_id": session_id})
+    
+    if session:
+        anonymous_sessions_collection.update_one({"session_id": session_id}, {"$inc": {"api_calls": 1}})
+        return {"message": "Anonymous session API calls incremented"}
+    
+    new_session={
+        "session_id": session_id,
+        "api_calls": 1
+    }
+    anonymous_sessions_collection.insert_one(new_session)
+    return {"message": "New anonymous session created"}
+
+
+        
+def get_anonymous_session(session_id):
+    session = anonymous_sessions_collection.find_one({"session_id": session_id}, {"_id": 0})  
+    
+    if session:
+        return session
+    else:
+        return {"message": "No session found"}
