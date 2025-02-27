@@ -3,3 +3,5 @@ uvicorn
 openai
 dotenv
 pymongo
+email-validator
+uuid
