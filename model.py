@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 
-class Model(BaseModel):
+class ChatRequest(BaseModel):
     text: str=Field(min_length=10,max_length=1000)
 
 class User(BaseModel):
