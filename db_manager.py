@@ -64,26 +64,25 @@ def increment_api_calls(email):
 
         
 def add_anonymous_session(session_id, user_text, bot_text):
-    session=anonymous_sessions_collection.find_one({"session_id": session_id})
+    session = anonymous_sessions_collection.find_one({"session_id": session_id})
     
     if session:
         anonymous_sessions_collection.update_one(
             {"session_id": session_id},
-            {"$inc": {"api_calls": 1},
-            "$push": {"chats": {"user": user_text, "bot": bot_text}}
+            {
+                "$inc": {"api_calls": 1},
+                "$push": {"chats": {"user": user_text, "bot": bot_text}}
             }
         )
-        
-        return {"message": "Anonymous session API calls incremented"}
+        return {"message": "Anonymous session updated"}
     
-    new_session={
+    new_session = {
         "session_id": session_id,
         "api_calls": 1,
-        "chats": {"user": user_text, "bot": bot_text}
+        "chats": [{"user": user_text, "bot": bot_text}]  
     }
     anonymous_sessions_collection.insert_one(new_session)
     return {"message": "New anonymous session created"}
-
 
         
 def get_anonymous_session(session_id):
