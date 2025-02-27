@@ -22,7 +22,7 @@ db=client["chatbot_db"]
 users_collection = db["users"]
 anonymous_sessions_collection = db["anonymous_sessions"]
 
-def add_user(name, email):
+def add_user(name, email, session_id=None):
     existing_user=users_collection.find_one({"email": email})
     
     if existing_user:
@@ -33,10 +33,16 @@ def add_user(name, email):
         "api_calls": 0,
         "chats": []
     }
-    
+    if session_id:
+        session = anonymous_sessions_collection.find_one({"session_id": session_id})
+        if session and "chats" in session:
+            new_user["chats"] = session["chats"] 
+            anonymous_sessions_collection.delete_one({"session_id": session_id})  
+
+            
     users_collection.insert_one(new_user)
     
-    return{"message": "User created succesfully"}
+    return{"message": "User created succesfully and chat history transferred" if session_id else "User created"}
 
 def get_user(email):
     user = users_collection.find_one({"email": email}, {"_id": 0})  
@@ -57,16 +63,23 @@ def increment_api_calls(email):
     return {"message": "User not found"}
 
         
-def add_anonymous_session(session_id):
+def add_anonymous_session(session_id, user_text, bot_text):
     session=anonymous_sessions_collection.find_one({"session_id": session_id})
     
     if session:
-        anonymous_sessions_collection.update_one({"session_id": session_id}, {"$inc": {"api_calls": 1}})
+        anonymous_sessions_collection.update_one(
+            {"session_id": session_id},
+            {"$inc": {"api_calls": 1},
+            "$push": {"chats": {"user": user_text, "bot": bot_text}}
+            }
+        )
+        
         return {"message": "Anonymous session API calls incremented"}
     
     new_session={
         "session_id": session_id,
-        "api_calls": 1
+        "api_calls": 1,
+        "chats": {"user": user_text, "bot": bot_text}
     }
     anonymous_sessions_collection.insert_one(new_session)
     return {"message": "New anonymous session created"}
