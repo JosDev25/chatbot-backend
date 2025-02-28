@@ -5,3 +5,4 @@ dotenv
 pymongo
 email-validator
 uuid
+passlib[bcrypt]
