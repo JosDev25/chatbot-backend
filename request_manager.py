@@ -20,3 +20,10 @@ def validate_chat_request(text: str, email: str=None, session_id: str=None):
             return {"error": f"Your message contains forbidden content", "forbidden": True}
     
     return None
+
+def contains_b_words(text: str):
+    words=text.lower().split()
+    for word in words:
+        if word in FORBIDDEN_WORDS:
+            return True
+    return False
