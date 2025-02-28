@@ -5,6 +5,7 @@ import uuid
 import openai
 from model import ChatRequest 
 from db_manager import add_user, get_user, get_anonymous_session, add_anonymous_session, increment_api_calls
+from request_manager import validate_chat_request
 
 app = FastAPI()
 
@@ -16,10 +17,24 @@ def create_session():
     session_id = str(uuid.uuid4())
     return {"session_id": session_id}
 
+@app.post('/login')
+def login_user(email: str):
+    user = get_user(email)
+    
+    if user.get("message") == "User not found":
+        return {"message": "User not found", "success": False}
+    
+    if "chats" in user:
+        return {"message": "Login successful", "chats": user["chats"], "success": True}
+    
+    return {"message": "User found but no chat", "success": True}
 
 @app.post('/chat')
 def generate_response(request: ChatRequest, email: str = None, session_id: str = None):
-
+    
+    validation_result = validate_chat_request(request.text, email, session_id)
+    if validation_result:
+        return validation_result
     if not email and not session_id:
         return {"message": "Either email or session_id is required"}
     
