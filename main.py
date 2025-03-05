@@ -1,13 +1,29 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from dotenv import load_dotenv
 import os
 import uuid
 import openai
-from model import ChatRequest 
-from db_manager import add_user, get_user, get_anonymous_session, add_anonymous_session, increment_api_calls
+from model import User
+from model import ChatRequest, LoginRequest 
+from db_manager import add_user, get_user, get_anonymous_session, add_anonymous_session, increment_api_calls, users_collection
+from db_manager import pwd_context
 from request_manager import validate_chat_request
+from passlib.context import CryptContext
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+allowed_origins=[
+    "http://localhost:5173"
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins, 
+    allow_credentials=True,
+    allow_methods=["*"],  
+    allow_headers=["*"], 
+)
+
 
 load_dotenv()
 openai.api_key = os.getenv("SECRET_KEY")
@@ -18,23 +34,29 @@ def create_session():
     return {"session_id": session_id}
 
 @app.post('/login')
-def login_user(email: str):
-    user = get_user(email)
+def login_user(request: LoginRequest):
+    user = users_collection.find_one({"email": request.email}, {"_id": 0})
     
-    if user.get("message") == "User not found":
-        return {"message": "User not found", "success": False}
+    if not user:
+        return {"message": "Invalid email or password", "success": False}
     
-    if "chats" in user:
-        return {"message": "Login successful", "chats": user["chats"], "success": True}
+    if not pwd_context.verify(request.password, user["password"]):
+        return {"message": "Invalid email or password", "success": False}
     
-    return {"message": "User found but no chat", "success": True}
+    user_data = {k: v for k, v in user.items() if k != "password"}
+    
+    return {
+        "message": "Login successful", 
+        "user": user_data,
+        "success": True
+    }
 
 @app.post('/chat')
 def generate_response(request: ChatRequest, email: str = None, session_id: str = None):
     
     validation_result = validate_chat_request(request.text, email, session_id)
     if validation_result:
-        return validation_result
+     return validation_result
     if not email and not session_id:
         return {"message": "Either email or session_id is required"}
     
@@ -86,6 +108,6 @@ def get_chat_history(email: str, session_id:str=None):
     return {"message": "You must provide either an email or a session_id"}
 
 @app.post('/register')
-def register_user(name: str, email: str, session_id: str = None):
-    result = add_user(name, email, session_id)
+def register_user(request: User, session_id: str = None):
+    result = add_user(request.name, request.email, request.password, session_id)
     return result
