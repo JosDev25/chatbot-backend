@@ -52,11 +52,14 @@ def login_user(request: LoginRequest):
     }
 
 @app.post('/chat')
-def generate_response(request: ChatRequest, email: str = None, session_id: str = None):
+def generate_response(request: dict):
+    text = request.get("text")
+    email = request.get("email")
+    session_id = request.get("session_id")
     
-    validation_result = validate_chat_request(request.text, email, session_id)
-    if validation_result:
-     return validation_result
+    if not text or len(text) < 10:
+        return {"message": "El texto debe tener al menos 10 caracteres"}
+    
     if not email and not session_id:
         return {"message": "Either email or session_id is required"}
     
@@ -70,7 +73,7 @@ def generate_response(request: ChatRequest, email: str = None, session_id: str =
     
     response = openai.ChatCompletion.create(  
         model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": request.text}],
+        messages=[{"role": "user", "content": text}],
         max_tokens=1024,
         n=1,
         temperature=0.3
@@ -83,10 +86,10 @@ def generate_response(request: ChatRequest, email: str = None, session_id: str =
         from db_manager import users_collection
         users_collection.update_one(
             {"email": email},
-            {"$push": {"chats": {"user": request.text, "bot": bot_response}}}
+            {"$push": {"chats": {"user": text, "bot": bot_response}}}
         )
     elif session_id:
-        add_anonymous_session(session_id, request.text, bot_response)
+        add_anonymous_session(session_id, text, bot_response)
     
     return {"response": bot_response}
 
@@ -111,3 +114,10 @@ def get_chat_history(email: str, session_id:str=None):
 def register_user(request: User, session_id: str = None):
     result = add_user(request.name, request.email, request.password, session_id)
     return result
+
+@app.get("/api_calls")
+def get_api_calls(session_id: str):
+    session = get_anonymous_session(session_id)
+    if isinstance(session, dict) and "api_calls" in session:
+        return {"api_calls": session["api_calls"]}
+    return {"error": "Session not found"}, 404
