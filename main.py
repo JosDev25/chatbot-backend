@@ -56,6 +56,7 @@ def generate_response(request: dict):
     text = request.get("text")
     email = request.get("email")
     session_id = request.get("session_id")
+    model=request.get("model","gpt-4o")
     
     if not text or len(text) < 10:
         return {"message": "El texto debe tener al menos 10 caracteres"}
@@ -71,8 +72,8 @@ def generate_response(request: dict):
                 "limit_reached": True
             }
     
-    response = openai.ChatCompletion.create(  
-        model="gpt-3.5-turbo",
+    response = openai.ChatCompletion.create(
+        model=model,
         messages=[{"role": "user", "content": text}],
         max_tokens=1024,
         n=1,
@@ -86,8 +87,8 @@ def generate_response(request: dict):
         from db_manager import users_collection
         users_collection.update_one(
             {"email": email},
-            {"$push": {"chats": {"user": text, "bot": bot_response}}}
-        )
+            {"$push": {"chats": {"user": text, "bot": bot_response, "model": model}}} 
+        )   
     elif session_id:
         add_anonymous_session(session_id, text, bot_response)
     
