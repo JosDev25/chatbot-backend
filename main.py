@@ -14,7 +14,8 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 
 allowed_origins=[
-    "http://localhost:5173"
+    "http://localhost:5173",
+    "https://fastapi-chatbot-dl9g.onrender.com" 
 ]
 app.add_middleware(
     CORSMiddleware,
