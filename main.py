@@ -15,7 +15,7 @@ app = FastAPI()
 
 allowed_origins=[
     "http://localhost:5173",
-    "https://fastapi-chatbot-dl9g.onrender.com" 
+    "https://chatbot-frontend-mudg.vercel.app" 
 ]
 app.add_middleware(
     CORSMiddleware,
