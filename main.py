@@ -16,8 +16,9 @@ app = FastAPI()
 allowed_origins=[
     "http://localhost:5173",
     "https://chatbot-frontend-mudg.vercel.app",
-    "https://chatbot-frontend-mudg-lvakj4vr2-josdev25s-projects.vercel.app"  
+    "https://*.vercel.app"  
 ]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins, 
