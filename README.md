@@ -10,9 +10,7 @@
 5. [Prerequisites](#prerequisites)
 6. [Installation and Execution](#installation-and-execution)
 7. [Main Endpoints](#main-endpoints)
-8. [Contributing](#contributing)
-9. [License](#license)
-10. [Contact](#contact)
+8. [Contact](#contact)
 
 ## Project Description
 The **AI Chat Assistant SPA** is an application designed to provide users with a seamless chat experience with an artificial intelligence assistant. This repository contains the backend of the project, developed to manage business logic, user authentication, message processing, and interaction with the OpenAI API.
